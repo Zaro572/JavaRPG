@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * @author Zaro Kavelar
+ * @author Isa Begovic
  * @version 19.04.2024
  */
 public class MainGameApplication extends GameApplication {
@@ -56,6 +57,13 @@ public class MainGameApplication extends GameApplication {
         player = FXGL.entityBuilder()
                 .at(0, 0)
                 .viewWithBBox(playerTexture)
+                .buildAndAttach();
+
+        FXGL.entityBuilder()
+                .type(EntityType.COIN)
+                .at(500, 200)
+                .viewWithBBox(new Circle(15, 15, 15, Color.YELLOW))
+                .with(new CollidableComponent(true))
                 .buildAndAttach();
 
         FXGL.play("battle1.mp3");
@@ -127,4 +135,11 @@ public class MainGameApplication extends GameApplication {
     public static void main(String[] args) {
         MainGameApplication.launch(args);
     }
+
+    public enum EntityType {
+        PLAYER, COIN
+    }
+
+
+
 }

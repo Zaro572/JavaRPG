@@ -37,12 +37,12 @@ public class MainGameApplication extends GameApplication {
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setWidth(600);
-        settings.setHeight(600);
         settings.setTitle("Cool Game!!");
         settings.setVersion("1.0.0");
-
-
+        settings.setWidth(1280);
+        settings.setHeight(720);
+        settings.setMainMenuEnabled(true);
+        //settings.setSceneFactory(new MainGameSceneFactory());
     }
 
     @Override
@@ -64,7 +64,7 @@ public class MainGameApplication extends GameApplication {
 
     @Override
     protected void initGameVars(Map<String, Object> vars) {
-        vars.put("distanceTraveled", 0);
+        vars.put("pixelsMoved", 0);
     }
 
     @Override
@@ -73,29 +73,29 @@ public class MainGameApplication extends GameApplication {
         statsText.setTranslateX(50);
         statsText.setTranslateY(100);
         FXGL.getGameScene().addUINode(statsText);
-        //statsText.textProperty().bind(getGameState().intProperty("pixelsMoved").asString());
+        statsText.textProperty().bind(FXGL.getip("pixelsMoved").asString());
+        statsText.setVisible(false);
     }
 
     @Override
     protected void initInput() {
-        FXGL.onKey(KeyCode.W, this::moveUp);
-        FXGL.onKey(KeyCode.S, this::moveDown);
-        FXGL.onKey(KeyCode.A, this::moveLeft);
-        FXGL.onKey(KeyCode.D, this::moveRight);
+        FXGL.onKey(KeyCode.W, "Move Up", this::moveUp);
+        FXGL.onKey(KeyCode.S, "Move Down", this::moveDown);
+        FXGL.onKey(KeyCode.A, "Move Left", this::moveLeft);
+        FXGL.onKey(KeyCode.D, "Move Right", this::moveRight);
 
-        FXGL.onKey(KeyCode.UP, this::moveUp);
-        FXGL.onKey(KeyCode.DOWN, this::moveDown);
-        FXGL.onKey(KeyCode.LEFT, this::moveLeft);
-        FXGL.onKey(KeyCode.RIGHT, this::moveRight);
+        FXGL.onKey(KeyCode.UP, "Move Up 2", this::moveUp);
+        FXGL.onKey(KeyCode.DOWN, "Move Down 2", this::moveDown);
+        FXGL.onKey(KeyCode.LEFT, "Move Left 2", this::moveLeft);
+        FXGL.onKey(KeyCode.RIGHT, "Move Right 2", this::moveRight);
 
-        FXGL.onKey(KeyCode.Q, this::toggleStats);
+        FXGL.onKey(KeyCode.Q, "Toggle Stats", this::toggleStats);
     }
 
     private void moveUp() {
         if (player.getY() > 0) {
             System.out.println("UP");
             player.translateY(step * -1);
-
         }
     }
 
@@ -121,7 +121,7 @@ public class MainGameApplication extends GameApplication {
     }
 
     private void toggleStats() {
-
+        statsText.setVisible(!statsText.isVisible());
     }
 
     public static void main(String[] args) {

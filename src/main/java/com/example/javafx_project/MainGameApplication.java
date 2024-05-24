@@ -1,5 +1,6 @@
 package com.example.javafx_project;
 
+import static com.almasb.fxgl.dsl.FXGL.*;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.audio.Audio;
@@ -19,7 +20,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.jetbrains.annotations.NotNull;
-
+import com.almasb.fxgl.physics.CollisionHandler;
 import java.util.Map;
 
 /**
@@ -56,8 +57,10 @@ public class MainGameApplication extends GameApplication {
         FXGL.getGameScene().setBackgroundRepeat("grass.png");
 
         player = FXGL.entityBuilder()
+                .type(EntityType.PLAYER)
                 .at(0, 0)
                 .viewWithBBox(playerTexture)
+                .with(new CollidableComponent(true))
                 .buildAndAttach();
 
         FXGL.entityBuilder()
@@ -99,6 +102,16 @@ public class MainGameApplication extends GameApplication {
         FXGL.onKey(KeyCode.RIGHT, "Move Right 2", this::moveRight);
 
         FXGL.onKey(KeyCode.Q, "Toggle Stats", this::toggleStats);
+    }
+
+    @Override
+    protected void intPhysics() {
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.COIN) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity coin) {
+
+            }
+        });
     }
 
     private void moveUp() {

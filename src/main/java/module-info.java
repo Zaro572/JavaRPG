@@ -13,6 +13,8 @@ module com.example.javafx_project {
     requires annotations;
 
     opens assets.textures;
+    opens assets.sounds;
+    opens assets.music;
     opens com.example.javafx_project to javafx.fxml;
     exports com.example.javafx_project;
 }

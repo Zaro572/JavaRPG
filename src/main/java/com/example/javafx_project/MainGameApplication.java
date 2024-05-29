@@ -15,13 +15,16 @@ import com.almasb.fxgl.time.LocalTimer;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import org.jetbrains.annotations.NotNull;
 import com.almasb.fxgl.physics.CollisionHandler;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * @author Zaro Kavelar
@@ -32,7 +35,7 @@ public class MainGameApplication extends GameApplication {
     private final int playerSize = 32;
     private final int step = 4;
 
-    private boolean canMove = true;
+    private Random random;
 
     private Entity player;
 
@@ -40,7 +43,7 @@ public class MainGameApplication extends GameApplication {
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setTitle("Cool Game!!");
+        settings.setTitle(" JavaRPG ");
         settings.setVersion("1.0.0");
         settings.setWidth(1280);
         settings.setHeight(720);
@@ -50,43 +53,38 @@ public class MainGameApplication extends GameApplication {
 
     @Override
     protected void initGame() {
-        Texture playerTexture = FXGL.getAssetLoader().loadTexture("aryan.png");
-
-        playerTexture.resize(playerSize, playerSize);
+        random = new Random();
 
         FXGL.getGameScene().setBackgroundRepeat("grass.png");
 
         player = FXGL.entityBuilder()
                 .type(EntityType.PLAYER)
                 .at(0, 0)
-                .viewWithBBox(playerTexture)
+                .viewWithBBox(getTexture("aryan.png"))
                 .with(new CollidableComponent(true))
                 .buildAndAttach();
 
-        FXGL.entityBuilder()
-                .type(EntityType.COIN)
-                .at(500, 200)
-                .viewWithBBox(new Circle(15, 15, 15, Color.YELLOW))
-                .with(new CollidableComponent(true))
-                .buildAndAttach();
+        generateCoin();
 
-        FXGL.play("battle1.mp3");
+        FXGL.getAudioPlayer().loopMusic(FXGL.getAssetLoader().loadMusic("field1.mp3"));
 
     }
 
     @Override
     protected void initGameVars(Map<String, Object> vars) {
-        vars.put("pixelsMoved", 0);
+        vars.put("coins", 0);
     }
 
     @Override
     protected void initUI() {
         statsText = new Text();
-        statsText.setTranslateX(50);
-        statsText.setTranslateY(100);
+        statsText.setTranslateX(20);
+        statsText.setTranslateY(40);
+        statsText.setFont(Font.loadFont("https://cdn.redj.me/fonts/SHOWG.ttf", 36));
+        statsText.setFill(Color.DARKORANGE);
         FXGL.getGameScene().addUINode(statsText);
-        statsText.textProperty().bind(FXGL.getip("pixelsMoved").asString());
-        statsText.setVisible(false);
+        statsText.textProperty().bind(FXGL.getip("coins").asString());
+        //statsText.setVisible(false);
     }
 
     @Override
@@ -101,7 +99,7 @@ public class MainGameApplication extends GameApplication {
         FXGL.onKey(KeyCode.LEFT, "Move Left 2", this::moveLeft);
         FXGL.onKey(KeyCode.RIGHT, "Move Right 2", this::moveRight);
 
-        FXGL.onKey(KeyCode.Q, "Toggle Stats", this::toggleStats);
+        //FXGL.onKey(KeyCode.Q, "Toggle Stats", this::toggleStats);
     }
 
     @Override
@@ -109,9 +107,34 @@ public class MainGameApplication extends GameApplication {
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.COIN) {
             @Override
             protected void onCollisionBegin(Entity player, Entity coin) {
-
+                FXGL.play("coin.wav");
+                FXGL.set("coins", FXGL.geti("coins") + 1);
+                coin.removeFromWorld();
+                generateCoin();
             }
         });
+    }
+
+    private Texture getTexture(String name) {
+        return getTexture(name, playerSize, playerSize);
+    }
+
+    private Texture getTexture(String name, int w, int h) {
+        Texture texture = FXGL.getAssetLoader().loadTexture(name);
+        texture.resize(w, h);
+        return texture;
+    }
+
+    private void generateCoin() {
+        int posx = random.nextInt(FXGL.getGameScene().getAppWidth() - 32) + 16;
+        int posy = random.nextInt(FXGL.getGameScene().getAppHeight() - 32) + 16;
+
+        FXGL.entityBuilder()
+            .type(EntityType.COIN)
+            .at(posx, posy)
+            .viewWithBBox(getTexture("coin.png"))
+            .with(new CollidableComponent(true))
+            .buildAndAttach();
     }
 
     private void moveUp() {
@@ -151,7 +174,8 @@ public class MainGameApplication extends GameApplication {
     }
 
     public enum EntityType {
-        PLAYER, COIN
+        PLAYER,
+        COIN
     }
 
 

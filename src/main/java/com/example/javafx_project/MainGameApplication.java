@@ -1,6 +1,8 @@
 package com.example.javafx_project;
 
 import javafx.geometry.Point2D;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import org.jetbrains.annotations.NotNull;
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
@@ -41,7 +43,10 @@ public class MainGameApplication extends GameApplication {
 
     private Entity player;
 
+    private Font showgFont;
+
     private Text statsText;
+    private Text hpText;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -58,6 +63,8 @@ public class MainGameApplication extends GameApplication {
     @Override
     protected void initGame() {
         random = new Random();
+        showgFont = Font.loadFont("file:///C:/Windows/Fonts/SHOWG.ttf", 36);
+        //showgFont = Font.loadFont("https://cdn.redj.me/fonts/SHOWG.ttf", 36);
 
         FXGL.getGameScene().setBackgroundRepeat("grass.png");
 
@@ -78,6 +85,7 @@ public class MainGameApplication extends GameApplication {
     @Override
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("coins", 0);
+        vars.put("hp", 10);
         vars.put("speedBoostDuration", 0);
     }
 
@@ -86,11 +94,18 @@ public class MainGameApplication extends GameApplication {
         statsText = new Text();
         statsText.setTranslateX(20);
         statsText.setTranslateY(40);
-        statsText.setFont(Font.loadFont("https://cdn.redj.me/fonts/SHOWG.ttf", 36));
+        statsText.setFont(showgFont);
         statsText.setFill(Color.DARKORANGE);
         FXGL.getGameScene().addUINode(statsText);
         statsText.textProperty().bind(FXGL.getip("coins").asString());
-        //statsText.setVisible(false);
+
+        hpText = new Text();
+        hpText.setTranslateX(20);
+        hpText.setTranslateY(80);
+        hpText.setFont(showgFont);
+        hpText.setFill(Color.DARKRED);
+        FXGL.getGameScene().addUINode(hpText);
+        hpText.textProperty().bind(FXGL.getip("hp").asString());
     }
 
     @Override
@@ -117,8 +132,14 @@ public class MainGameApplication extends GameApplication {
                 FXGL.set("coins", FXGL.geti("coins") + 1);
                 coin.removeFromWorld();
                 generateCoin();
-                if (getRandomValue(0, 19) == 0) {
+                if (getRandomValue(0, 29) == 0) {
                     generateBooster();
+                }
+                if (getRandomValue(0, 29) == 0) {
+                    generateHealth();
+                }
+                if (FXGL.geti("coins") >= 20 && FXGL.geti("coins") % 10 == 0) {
+                    generateEnemy();
                 }
             }
         });
@@ -131,6 +152,32 @@ public class MainGameApplication extends GameApplication {
                 boost.removeFromWorld();
             }
         });
+
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.HEALTHBOOST) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity boost) {
+                FXGL.play("boost.wav");
+                FXGL.set("hp", FXGL.geti("hp") + 1);
+                boost.removeFromWorld();
+            }
+        });
+
+        FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.ZOMBIE) {
+            @Override
+            protected void onCollisionBegin(Entity player, Entity enemy) {
+                FXGL.set("hp", FXGL.geti("hp") - 1);
+                checkHP();
+            }
+        });
+    }
+
+    private void checkHP() {
+        if (FXGL.geti("hp") <= 0) {
+            FXGL.getDialogService().showMessageBox("You died! Your final score was: " + FXGL.geti("coins"), () ->{
+                FXGL.getAudioPlayer().stopAllSoundsAndMusic();
+                FXGL.getGameController().gotoMainMenu();
+            });
+        }
     }
 
     private Texture getTexture(String name) {
@@ -177,6 +224,30 @@ public class MainGameApplication extends GameApplication {
                 .viewWithBBox(boosterAnimatedTexture)
                 .with(new CollidableComponent(true))
                 .buildAndAttach();
+    }
+
+    private void generateHealth() {
+        Texture boosterTexture = getTexture("health.png");
+        AnimatedTexture boosterAnimatedTexture = new AnimatedTexture(new AnimationChannel(boosterTexture.getImage(), Duration.seconds(1), 4));
+        boosterAnimatedTexture.loop();
+
+        FXGL.entityBuilder()
+                .type(EntityType.HEALTHBOOST)
+                .at(getRandomMapLocation(itemSize))
+                .viewWithBBox(boosterAnimatedTexture)
+                .with(new CollidableComponent(true))
+                .buildAndAttach();
+    }
+
+    private void generateEnemy() {
+        FXGL.entityBuilder()
+            .type(EntityType.ZOMBIE)
+            .at(getRandomMapLocation(playerSize))
+            .viewWithBBox(getTexture("blank.png"))
+            .with(new CollidableComponent(true))
+            .with(new AnimationComponent("zombie.png"))
+            .with(new EnemyComponent(player))
+            .buildAndAttach();
     }
 
     private int getStepSize() {
@@ -233,7 +304,9 @@ public class MainGameApplication extends GameApplication {
     public enum EntityType {
         PLAYER,
         COIN,
-        SPEEDBOOST
+        SPEEDBOOST,
+        HEALTHBOOST,
+        ZOMBIE
     }
 
 

@@ -69,9 +69,7 @@ public class AnimationComponent extends Component {
         if (texture.getAnimationChannel() != channel) {
             keepWalking = true;
         }
-        System.out.println(isWalking);
-        System.out.println(keepWalking);
-        System.out.println();
+
         if (isWalking && keepWalking) {
             texture.playAnimationChannel(channel);
             isWalking = false;

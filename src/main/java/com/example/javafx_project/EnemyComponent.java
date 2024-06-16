@@ -10,8 +10,10 @@ import javafx.geometry.Point2D;
 
 public class EnemyComponent extends Component {
     private Entity player;
+    private MainGameApplication app;
 
-    public EnemyComponent(Entity player) {
+    public EnemyComponent(MainGameApplication app, Entity player) {
+        this.app = app;
         this.player = player;
     }
 
@@ -25,9 +27,13 @@ public class EnemyComponent extends Component {
         if (distance > 0) {
             double dx = (playerPos.getX() - enemyPos.getX()) / distance;
             double dy = (playerPos.getY() - enemyPos.getY()) / distance;
-
-            double speed = 100; // pixels per second
-            entity.translate(dx * speed * tpf, dy * speed * tpf);
+            double speed = 100;
+            double x = dx * speed * tpf;
+            double y = dy * speed * tpf;
+            Point2D pos = entity.getPosition().add(x, y);
+            if (!app.checkForEntity(pos, EntityType.ZOMBIE, entity)) {
+                entity.setPosition(pos);
+            }
         }
     }
 }

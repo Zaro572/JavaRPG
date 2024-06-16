@@ -1,5 +1,7 @@
 package com.example.javafx_project;
 
+import eu.hansolo.toolboxfx.geom.Poi;
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Point2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -85,7 +87,7 @@ public class MainGameApplication extends GameApplication {
     @Override
     protected void initGameVars(Map<String, Object> vars) {
         vars.put("coins", 0);
-        vars.put("hp", 10);
+        vars.put("hp", 100);
         vars.put("speedBoostDuration", 0);
     }
 
@@ -129,18 +131,14 @@ public class MainGameApplication extends GameApplication {
             @Override
             protected void onCollisionBegin(Entity player, Entity coin) {
                 FXGL.play("coin.wav");
-                FXGL.set("coins", FXGL.geti("coins") + 1);
+                FXGL.inc("coins", 1);
+                int coinCounter = FXGL.geti("coins");
                 coin.removeFromWorld();
                 generateCoin();
-                if (getRandomValue(0, 29) == 0) {
-                    generateBooster();
-                }
-                if (getRandomValue(0, 29) == 0) {
-                    generateHealth();
-                }
-                if (FXGL.geti("coins") >= 20 && FXGL.geti("coins") % 10 == 0) {
-                    generateEnemy();
-                }
+                if (getChance(30)) generateBooster();
+                if (getChance(30)) generateHealth();
+                if (coinCounter % 10 == 0) generateEnemy();
+                if (coinCounter % 50 == 0) generateCoin();
             }
         });
 
@@ -156,15 +154,16 @@ public class MainGameApplication extends GameApplication {
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.HEALTHBOOST) {
             @Override
             protected void onCollisionBegin(Entity player, Entity boost) {
-                FXGL.play("boost.wav");
-                FXGL.set("hp", FXGL.geti("hp") + 1);
+                FXGL.play("heal.wav");
+                FXGL.inc("hp", 10);
                 boost.removeFromWorld();
             }
         });
 
         FXGL.getPhysicsWorld().addCollisionHandler(new CollisionHandler(EntityType.PLAYER, EntityType.ZOMBIE) {
             @Override
-            protected void onCollisionBegin(Entity player, Entity enemy) {
+            protected void onCollision(Entity player, Entity enemy) {
+                FXGL.play("damage.wav");
                 FXGL.set("hp", FXGL.geti("hp") - 1);
                 checkHP();
             }
@@ -192,6 +191,10 @@ public class MainGameApplication extends GameApplication {
 
     private int getRandomValue(int lowerBound, int upperBound) {
         return random.nextInt((upperBound - lowerBound) + 1) + lowerBound;
+    }
+
+    private boolean getChance(int chance) {
+        return getRandomValue(0, chance) == 0;
     }
 
     private Point2D getRandomMapLocation(int constraint) {
@@ -246,7 +249,7 @@ public class MainGameApplication extends GameApplication {
             .viewWithBBox(getTexture("blank.png"))
             .with(new CollidableComponent(true))
             .with(new AnimationComponent("zombie.png"))
-            .with(new EnemyComponent(player))
+            .with(new EnemyComponent(this, player))
             .buildAndAttach();
     }
 
@@ -293,22 +296,17 @@ public class MainGameApplication extends GameApplication {
         }
     }
 
-    private void toggleStats() {
-        statsText.setVisible(!statsText.isVisible());
+    public boolean checkForEntity(Point2D position, EntityType type, Entity self) {
+        for (Entity e : FXGL.getGameWorld().getEntitiesByType(type)) {
+            double distance = e.getPosition().distance(position);
+            if ((distance < 20 || getChance(50)) && e != self) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void main(String[] args) {
         MainGameApplication.launch(args);
     }
-
-    public enum EntityType {
-        PLAYER,
-        COIN,
-        SPEEDBOOST,
-        HEALTHBOOST,
-        ZOMBIE
-    }
-
-
-
 }
